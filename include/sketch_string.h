@@ -1,6 +1,10 @@
 #ifndef SKETCH_STL_STRING_H
 #define SKETCH_STL_STRING_H
 
+#include <assert.h>
+#include <stddef.h>
+#include <stdlib.h>
+
 namespace SketchStl {
 
 /**
@@ -117,7 +121,7 @@ class string {
         void reserve(size_t n=0);
         
         /**
-         * Clear the string
+         * Clear the string. The content are erased and the string becomes an empty string (length of 0)
          */
         void clear();
 

@@ -1,7 +1,4 @@
-#include "string.h"
-
-#include <assert.h>
-#include <stdlib.h>
+#include "sketch_string.h"
 
 namespace SketchStl {
 
@@ -14,25 +11,26 @@ string::string(const string& str) {
     length_ = str.length_;
     capacity_ = str.capacity_;
 
-    if (capacity_ > 0) {
-        data_ = (char*)malloc(capacity_);
-        for (size_t i = 0; i < length_; i++) {
-            data_[i] = str.data_[i];
-        }
-        data_[length_] = '\0';
+    data_ = (char*)malloc(capacity_);
+    for (size_t i = 0; i < length_; i++) {
+        data_[i] = str.data_[i];
     }
+    data_[length_] = '\0';
 }
 
 string::string(const string& str, size_t pos, size_t len) : data_(nullptr), length_(len), capacity_(len) {
-    if (capacity_ > 0) {
-        capacity_ += 1;
-        data_ = (char*)malloc(capacity_);
-        size_t idx = pos;
-        for (size_t i = 0; i < length_; i++) {
-            data_[i] = str[pos++];
-        }
-        data_[length_] = '\0';
+    if (len == npos) {
+        length_ = str.length_ - pos;
+        capacity_ = length_;
     }
+
+    capacity_ += 1;
+    data_ = (char*)malloc(capacity_);
+    size_t idx = pos;
+    for (size_t i = 0; i < length_; i++) {
+        data_[i] = str[pos++];
+    }
+    data_[length_] = '\0';
 }
 
 string::string(const char* s) : data_(nullptr), length_(0), capacity_(0) {
@@ -46,39 +44,33 @@ string::string(const char* s) : data_(nullptr), length_(0), capacity_(0) {
         capacity_ += 1;
     }
 
-    if (capacity_ > 0) {
-        capacity_ += 1;
+    capacity_ += 1;
 
-        data_ = (char*)malloc(capacity_);
-        for (size_t i = 0; i < length_; i++) {
-            data_[i] = *s++;
-        }
-        data_[length_] = '\0';
+    data_ = (char*)malloc(capacity_);
+    for (size_t i = 0; i < length_; i++) {
+        data_[i] = *s++;
     }
+    data_[length_] = '\0';
 }
 
 string::string(const char* s, size_t n) : data_(nullptr), length_(n), capacity_(n) {
-    if (capacity_ > 0) {
-        capacity_ += 1;
+    capacity_ += 1;
 
-        data_ = (char*)malloc(capacity_);
-        for (size_t i = 0; i < length_; i++) {
-            data_[i] = *s++;
-        }
-        data_[length_] = '\0';
+    data_ = (char*)malloc(capacity_);
+    for (size_t i = 0; i < length_; i++) {
+        data_[i] = *s++;
     }
+    data_[length_] = '\0';
 }
 
 string::string(size_t n, char c) : data_(nullptr), length_(n), capacity_(n) {
-    if (capacity_ > 0) {
-        capacity_ += 1;
+    capacity_ += 1;
 
-        data_ = (char*)malloc(capacity_);
-        for (size_t i = 0; i < length_; i++) {
-            data_[i] = c;
-        }
-        data_[length_] = '\0';
+    data_ = (char*)malloc(capacity_);
+    for (size_t i = 0; i < length_; i++) {
+        data_[i] = c;
     }
+    data_[length_] = '\0';
 }
 
 string::~string() {
@@ -92,13 +84,11 @@ string& string::operator=(const string& str) {
         length_ = str.length_;
         capacity_ = str.capacity_;
 
-        if (capacity_ > 0) {
-            data_ = (char*)malloc(capacity_);
-            for (size_t i = 0; i < length_; i++) {
-                data_[i] = str.data_[i];
-            }
-            data_[length_] = '\0';
+        data_ = (char*)malloc(capacity_);
+        for (size_t i = 0; i < length_; i++) {
+            data_[i] = str.data_[i];
         }
+        data_[length_] = '\0';
     }
 
     return *this;
@@ -108,20 +98,22 @@ string& string::operator=(const char* s) {
     if (s != nullptr) {
         free(data_);
 
+        length_ = 0;
+        capacity_ = 0;
+
         const char* begin = s;
         while (*begin++) {
             length_ += 1;
             capacity_ += 1;
         }
 
-        if (capacity_ > 0) {
-            capacity_ += 1; 
+        capacity_ += 1; 
 
-            for (size_t i = 0; i < length_; i++) {
-                data_[i] = *s++;
-            }
-            data_[length_] = '\0';
+        data_ = (char*)malloc(capacity_);
+        for (size_t i = 0; i < length_; i++) {
+            data_[i] = *s++;
         }
+        data_[length_] = '\0';
     }
 
     return *this;
@@ -364,12 +356,14 @@ string& string::insert(size_t pos, const string& str) {
         free(data_);
         data_ = newData;
         capacity_ = newLength + 1;
+
+        data_[newLength] = '\0';
     } else {
         char* buffer = (char*)malloc(length_ - pos);
 
         // Start by copying the portion after the insertion position
         size_t idx = 0;
-        for (size_t i = pos; i < str.length_; i++) {
+        for (size_t i = pos; i < length_; i++) {
             buffer[idx++] = data_[i];
         }
 
@@ -394,6 +388,10 @@ string& string::insert(size_t pos, const string& str) {
 }
 
 string& string::insert(size_t pos, const string& str, size_t subpos, size_t sublen) {
+    if (str == "") {
+        return *this;
+    }
+
     return insert(pos, str.substr(subpos, sublen));
 }
 
@@ -413,42 +411,46 @@ string& string::insert(size_t pos, size_t n, char c) {
 }
 
 string& string::erase(size_t pos, size_t len) {
-    assert(pos < length_);
+    if (pos == 0 && len == npos) {
+        clear();
+    } else {
+        assert(pos < length_);
 
-    // Copy the left part of the buffer
-    char* leftBuffer = (char*)malloc(pos);
-    for (size_t i = 0; i < pos; i++) {
-        leftBuffer[i] = data_[i];
+        // Copy the left part of the buffer
+        char* leftBuffer = (char*)malloc(pos);
+        for (size_t i = 0; i < pos; i++) {
+            leftBuffer[i] = data_[i];
+        }
+
+        // Copy the right part of the buffer
+        size_t rightSize = length_ - pos - len;
+        char* rightBuffer = (char*)malloc(rightSize);
+
+        size_t idx = pos + len;
+        for (size_t i = 0; i < rightSize; i++) {
+            rightBuffer[i] = data_[idx++];
+        }
+
+        // Resize and concatenate the two buffers
+        free(data_);
+        length_ = pos + rightSize;
+        capacity_ = length_ + 1;
+        data_ = (char*)malloc(capacity_);
+
+        for (size_t i = 0; i < pos; i++) {
+            data_[i] = leftBuffer[i];
+        }
+
+        idx = pos;
+        for (size_t i = 0; i < rightSize; i++) {
+            data_[idx++] = rightBuffer[i];
+        }
+
+        data_[length_] = '\0';
+
+        free(leftBuffer);
+        free(rightBuffer);
     }
-
-    // Copy the right part of the buffer
-    size_t rightSize = length_ - pos - len;
-    char* rightBuffer = (char*)malloc(rightSize);
-
-    size_t idx = pos + len;
-    for (size_t i = 0; i < rightSize; i++) {
-        rightBuffer[i] = data_[idx++];
-    }
-
-    // Resize and concatenate the two buffers
-    free(data_);
-    length_ = pos + rightSize;
-    capacity_ = length_ + 1;
-    data_ = (char*)malloc(capacity_);
-
-    for (size_t i = 0; i < pos; i++) {
-        data_[i] = leftBuffer[i];
-    }
-
-    idx = pos;
-    for (size_t i = 0; i < rightSize; i++) {
-        data_[idx++] = rightBuffer[i];
-    }
-
-    data_[length_] = '\0';
-
-    free(leftBuffer);
-    free(rightBuffer);
 
     return *this;
 }
@@ -456,20 +458,60 @@ string& string::erase(size_t pos, size_t len) {
 string& string::replace(size_t pos, size_t len, const string& str) {
     assert(pos < length_);
 
-    size_t lengthToReplace = len;
-    if (lengthToReplace > str.length_) {
-        lengthToReplace = str.length_;
+    // We need a larger buffer
+    if (len > (length_ - pos)) {
+        len = length_ - pos;
     }
 
-    size_t endPos = pos + lengthToReplace;
-    if (endPos > length_) {
-        endPos = length_;
+    size_t newSize = length_ - len + str.length_;
+    if (newSize > (capacity_ - 1)) {
+        char* newData = (char*)malloc(newSize + 1);
+
+        for (size_t i = 0; i < pos; i++) {
+            newData[i] = data_[i];
+        }
+
+        size_t idx = 0;
+        size_t endPos = pos + str.length_;
+        for (size_t i = pos; i < endPos; i++) {
+            newData[i] = str.data_[idx++];
+        }
+
+        size_t rightPos = pos + len;
+        for (size_t i = endPos; i < newSize; i++) {
+            newData[i] = data_[rightPos++];
+        }
+
+        length_ = newSize;
+        capacity_ = newSize + 1;
+        free(data_);
+        data_ = newData;
+        
+    } else {
+        size_t rightSize = length_ - pos - len;
+        char* rightBuffer = (char*)malloc(rightSize);
+
+        size_t idx = 0;
+        size_t startPos = pos + len;
+        for (size_t i = startPos; i < length_; i++) {
+            rightBuffer[idx++] = data_[i];
+        }
+
+        idx = 0;
+        for (size_t i = pos; i < startPos; i++) {
+            data_[i] = str.data_[idx++];
+        }
+
+        idx = 0;
+        for (size_t i = pos + str.length_; i < newSize; i++) {
+            data_[i] = rightBuffer[idx++];
+        }
+
+        length_ = newSize;
+        free(rightBuffer);
     }
 
-    size_t idx = 0;
-    for (size_t i = pos; i < endPos; i++) {
-        data_[i] = str.data_[idx++];
-    }
+    data_[length_] = '\0';
 
     return *this;
 }
@@ -536,12 +578,13 @@ string string::substr(size_t pos, size_t len) const {
 
     size_t size = endPos - pos;
     string substring;
-    substring.reserve(size);
+    substring.resize(size);
 
     size_t idx = 0;
     for (size_t i = pos; i < endPos; i++) {
         substring.data_[idx++] = data_[i];
     }
+
     substring.data_[substring.length_] = '\0';
 
     return substring;

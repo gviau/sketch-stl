@@ -7,11 +7,11 @@ set(SRC_PATH "${CMAKE_SOURCE_DIR}/src/")
 set(HEADER_PATH "${CMAKE_SOURCE_DIR}/include/")
 
 set (SRC
-	 ${SRC_PATH}/string.cpp
+	 ${SRC_PATH}/sketch_string.cpp
 )
 
 set (HEADER
-	 ${HEADER_PATH}/string.h
+	 ${HEADER_PATH}/sketch_string.h
 )
 source_group("Source Files" FILES ${SRC})
 source_group("Header Files" FILES ${HEADER})
