@@ -498,12 +498,13 @@ string& string::replace(size_t pos, size_t len, const string& str) {
         }
 
         idx = 0;
+        startPos = pos + str.length_;
         for (size_t i = pos; i < startPos; i++) {
             data_[i] = str.data_[idx++];
         }
 
         idx = 0;
-        for (size_t i = pos + str.length_; i < newSize; i++) {
+        for (size_t i = startPos; i < newSize; i++) {
             data_[i] = rightBuffer[idx++];
         }
 
@@ -569,7 +570,15 @@ size_t string::copy(char* s, size_t len, size_t pos) {
 }
 
 string string::substr(size_t pos, size_t len) const {
+    if (length_ == 0) {
+        return "";
+    }
+
     assert(pos < length_);
+
+    if (len == npos) {
+        len = length_ - pos;
+    }
 
     size_t endPos = pos + len;
     if (endPos > length_) {
@@ -642,7 +651,7 @@ string operator+(const string& lhs, const string& rhs) {
     }
 
     size_t idx = 0;
-    for (size_t i = lhs.length_; i < rhs.length_; i++) {
+    for (size_t i = lhs.length_; i < newSize; i++) {
         result.data_[i] = rhs.data_[idx++];
     }
     result.data_[newSize] = '\0';
