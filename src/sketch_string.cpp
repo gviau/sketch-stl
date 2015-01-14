@@ -1,5 +1,7 @@
 #include "sketch_string.h"
 
+#include <math.h>
+
 namespace SketchStl {
 
 string::string() : data_(nullptr), length_(0), capacity_(1) {
@@ -597,6 +599,92 @@ string string::substr(size_t pos, size_t len) const {
     substring.data_[substring.length_] = '\0';
 
     return substring;
+}
+
+size_t string::find(const string& str, size_t pos) const {
+    if (str.length_ == 0) {
+        return pos;
+    }
+
+    if (str.length_ + pos > length_) {
+        return npos;
+    }
+
+    if (pos == 0 && str.length_ == length_) {
+        return (compare(str) == 0) ? 0 : npos;
+    }
+
+    // KMP algorithm as described at http://en.wikipedia.org/wiki/Knuth%E2%80%93Morris%E2%80%93Pratt_algorithm
+    int* table = (int*)malloc(str.length_ * sizeof(int));
+    table[0] = -1;
+    table[1] = 0;
+
+    // Table creation
+    size_t position = 2;
+    int cnd = 0;
+    while (position < str.length_) {
+        if (str[position - 1] == str[cnd]) {
+            cnd += 1;
+            table[position] = cnd;
+            position += 1;
+        } else if (cnd > 0) {
+            cnd = table[cnd];
+        } else {
+            table[position] = 0;
+            position += 1;
+        }
+    }
+
+    // String matching
+    size_t m = pos, i = 0;
+
+    while (m + i < length_) {
+        if (str[i] == data_[m + i]) {
+            if (i == str.length_ - 1) {
+                free(table);
+                return m;
+            }
+
+            i += 1;
+        } else {
+            if (table[i] > -1) {
+                m = m + i - table[i];
+                i = table[i];
+            } else {
+                i = 0;
+                m += 1;
+            }
+        }
+    }
+
+    free(table);
+    return npos;
+}
+
+size_t string::find(const char* s, size_t pos) const {
+    return find(string(s), pos);
+}
+
+size_t string::find(const char* s, size_t pos, size_t n) const {
+    return find(string(s, n), pos);
+}
+
+size_t string::find(char c, size_t pos) const {
+    if (pos >= length_) {
+        return npos;
+    }
+
+    if (length_ == 0) {
+        return npos;
+    }
+
+    for (size_t i = pos; i < length_; i++) {
+        if (c == data_[i]) {
+            return i;
+        }
+    }
+
+    return npos;
 }
 
 int string::compare(const string& str) const {

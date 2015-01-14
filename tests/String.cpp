@@ -797,6 +797,179 @@ BOOST_AUTO_TEST_CASE(string_substr)
     CompareStr(stdString.substr(6, 5), string.substr(6, 5), "World");
 }
 
+BOOST_AUTO_TEST_CASE(string_find_string)
+{
+    std::string stdString = "Hello World to everyone and all";
+    SketchStl::string string = "Hello World to everyone and all";
+
+    std::string stdSearchString = "Hello World";
+    SketchStl::string searchString = "Hello World";
+
+    size_t stdIdx = stdString.find(stdSearchString);
+    size_t idx = string.find(searchString);
+
+    BOOST_REQUIRE(stdIdx != std::string::npos && idx != SketchStl::string::npos && stdIdx == idx);
+
+    stdIdx = stdString.find(stdSearchString, 1);
+    idx = string.find(searchString, 1);
+
+    BOOST_REQUIRE(stdIdx == std::string::npos && idx == SketchStl::string::npos);
+
+    stdIdx = stdString.find(stdSearchString, 25);
+    idx = string.find(searchString, 25);
+
+    BOOST_REQUIRE(stdIdx == std::string::npos && idx == SketchStl::string::npos);
+
+    stdSearchString = "to everyone an";
+    searchString = "to everyone an";
+
+    stdIdx = stdString.find(stdSearchString);
+    idx = string.find(searchString);
+
+    BOOST_REQUIRE(stdIdx != std::string::npos && idx != SketchStl::string::npos && stdIdx == idx);
+
+    stdIdx = stdString.find(stdSearchString, 12);
+    idx = string.find(searchString, 12);
+
+    BOOST_REQUIRE(stdIdx != std::string::npos && idx != SketchStl::string::npos && stdIdx == idx);
+
+    stdSearchString = "";
+    searchString = "";
+
+    stdIdx = stdString.find(stdSearchString);
+    idx = string.find(searchString);
+
+    BOOST_REQUIRE(stdIdx == 0 && idx == 0);
+
+    stdIdx = stdString.find(stdSearchString, 5);
+    idx = string.find(searchString, 5);
+
+    BOOST_REQUIRE(stdIdx == 5 && idx == 5);
+}
+
+BOOST_AUTO_TEST_CASE(string_find_cstring)
+{
+    std::string stdString = "Hello World to everyone and all";
+    SketchStl::string string = "Hello World to everyone and all";
+
+    size_t stdIdx = stdString.find("Hello World");
+    size_t idx = string.find("Hello World");
+
+    BOOST_REQUIRE(stdIdx != std::string::npos && idx != SketchStl::string::npos && stdIdx == idx);
+
+    stdIdx = stdString.find("Hello World", 1);
+    idx = string.find("Hello World", 1);
+
+    BOOST_REQUIRE(stdIdx == std::string::npos && idx == SketchStl::string::npos);
+
+    stdIdx = stdString.find("Hello World", 25);
+    idx = string.find("Hello World", 25);
+
+    BOOST_REQUIRE(stdIdx == std::string::npos && idx == SketchStl::string::npos);
+
+    stdIdx = stdString.find("to everyone an");
+    idx = string.find("to everyone an");
+
+    BOOST_REQUIRE(stdIdx != std::string::npos && idx != SketchStl::string::npos && stdIdx == idx);
+
+    stdIdx = stdString.find("to everyone an", 12);
+    idx = string.find("to everyone an", 12);
+
+    BOOST_REQUIRE(stdIdx != std::string::npos && idx != SketchStl::string::npos && stdIdx == idx);
+
+    stdIdx = stdString.find("");
+    idx = string.find("");
+
+    BOOST_REQUIRE(stdIdx == 0 && idx == 0);
+
+    stdIdx = stdString.find("", 5);
+    idx = string.find("", 5);
+
+    BOOST_REQUIRE(stdIdx == 5 && idx == 5);
+}
+
+BOOST_AUTO_TEST_CASE(string_find_buffer)
+{
+    std::string stdString = "Hello World to everyone and all";
+    SketchStl::string string = "Hello World to everyone and all";
+
+    size_t stdIdx = stdString.find("Hello World to everyone", 0, 11);
+    size_t idx = string.find("Hello World to everyone", 0, 11);
+
+    BOOST_REQUIRE(stdIdx != std::string::npos && idx != SketchStl::string::npos && stdIdx == idx);
+
+    stdIdx = stdString.find("Hello World to everyone", 1, 11);
+    idx = string.find("Hello World to everyone", 1, 11);
+
+    BOOST_REQUIRE(stdIdx == std::string::npos && idx == SketchStl::string::npos);
+
+    stdIdx = stdString.find("Hello World to everyone", 25, 11);
+    idx = string.find("Hello World to everyone", 25, 11);
+
+    BOOST_REQUIRE(stdIdx == std::string::npos && idx == SketchStl::string::npos);
+
+    stdIdx = stdString.find("to everyone and all", 0, 14);
+    idx = string.find("to everyone and all", 0, 14);
+
+    BOOST_REQUIRE(stdIdx != std::string::npos && idx != SketchStl::string::npos && stdIdx == idx);
+
+    stdIdx = stdString.find("to everyone and all", 12, 14);
+    idx = string.find("to everyone and all", 12, 14);
+
+    BOOST_REQUIRE(stdIdx != std::string::npos && idx != SketchStl::string::npos && stdIdx == idx);
+
+    stdIdx = stdString.find("", 0, 0);
+    idx = string.find("", 0, 0);
+
+    BOOST_REQUIRE(stdIdx == 0 && idx == 0);
+
+    stdIdx = stdString.find("", 5, 0);
+    idx = string.find("", 5, 0);
+
+    BOOST_REQUIRE(stdIdx == 5 && idx == 5);
+}
+
+BOOST_AUTO_TEST_CASE(string_find_char)
+{
+    std::string stdString = "Hello World";
+    SketchStl::string string = "Hello World";
+
+    size_t stdIdx = stdString.find('H');
+    size_t idx = string.find('H');
+
+    BOOST_REQUIRE(stdIdx != std::string::npos && idx != SketchStl::string::npos && stdIdx == idx);
+
+    stdIdx = stdString.find('h');
+    idx = string.find('h');
+
+    BOOST_REQUIRE(stdIdx == std::string::npos && idx == SketchStl::string::npos);
+
+    stdIdx = stdString.find('l');
+    idx = string.find('l');
+
+    BOOST_REQUIRE(stdIdx == 2 && idx == 2);
+
+    stdIdx = stdString.find('l', 2);
+    idx = stdString.find('l', 2);
+
+    BOOST_REQUIRE(stdIdx == 2 && idx == 2);
+
+    stdIdx = stdString.find('l', 3);
+    idx = stdString.find('l', 3);
+
+    BOOST_REQUIRE(stdIdx == 3 && idx == 3);
+
+    stdIdx = stdString.find('e', 2);
+    idx = string.find('e', 2);
+
+    BOOST_REQUIRE(stdIdx == std::string::npos && idx == SketchStl::string::npos);
+
+    stdIdx = stdString.find('z');
+    idx = string.find('z');
+
+    BOOST_REQUIRE(stdIdx == std::string::npos && idx == SketchStl::string::npos);
+}
+
 BOOST_AUTO_TEST_CASE(string_string_compare_string)
 {
     std::string stdString = "Hello World";
