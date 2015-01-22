@@ -27,6 +27,7 @@ add_executable(
     tests
     Main.cpp
 	String.cpp
+	Vector.cpp
 )
 
 SOURCE_GROUP ("Source Files" REGULAR_EXPRESSION .*\\.cpp)

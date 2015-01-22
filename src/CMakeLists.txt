@@ -12,6 +12,7 @@ set (SRC
 
 set (HEADER
 	 ${HEADER_PATH}/sketch_string.h
+	 ${HEADER_PATH}/sketch_vector.h
 )
 source_group("Source Files" FILES ${SRC})
 source_group("Header Files" FILES ${HEADER})
