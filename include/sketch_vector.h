@@ -1,6 +1,8 @@
 #ifndef SKETCH_STL_VECTOR_H
 #define SKETCH_STL_VECTOR_H
 
+#include "sketch_iterator.h"
+
 #include <type_traits>
 
 namespace SketchStl {
@@ -11,6 +13,9 @@ namespace SketchStl {
 template <typename T>
 class vector {
     public:
+        typedef random_access_iterator<T> iterator;
+        typedef const random_access_iterator<T> const_iterator;
+
         /**
          * Default constructor
          * Initializes everything to 0
@@ -24,6 +29,15 @@ class vector {
          * @param val The value to fill the vector with
          */
         vector(size_t n, const T& val=T());
+
+        /**
+         * Range constructor
+         * Constructs a container with as many elements as the range [first, last), with each element
+         * constructed from its corresponding element in that range, in the same order
+         * @param first An iterator specifying the first position of the element in the range of elements
+         * @param last An iterator specifying the last, non-inclusive position of the element in the range of elements
+         */
+        vector(iterator first, iterator last);
 
         /**
          * Copy constructor
@@ -42,6 +56,46 @@ class vector {
          * @param rhs The vector to assign to this one
          */
         vector<T>& operator=(const vector& rhs);
+
+        /**
+         * Return the iterator at the beginning of the vector
+         */
+        iterator begin();
+        
+        /**
+         * Return a constant iterator at the beginning of the vector
+         */
+        const_iterator begin() const;
+
+        /**
+         * Return an iterator referring to the past-the-end element in the vector
+         */
+        iterator end();
+
+        /**
+         * Return a constant iterator referring to the past-the-end element in the vector
+         */
+        const_iterator end() const;
+
+        /**
+         * Return a reference to the first element in the vector
+         */
+        T& front();
+
+        /**
+         * Return a constant reference to the first element in the vector
+         */
+        const T& front() const;
+
+        /**
+         * Return a reference to the last element in the vector
+         */
+        T& back();
+
+        /**
+         * Return a constant reference to the last element in the vector
+         */
+        const T& back() const;
 
         size_t size() const { return length_; }
         size_t capacity() const { return capacity_; }
@@ -77,6 +131,13 @@ class vector {
         const T& at(size_t n) const;
 
         /**
+         * Assign a new content to the vector by specifying a range of values from two iterators
+         * @param first The first element to consider in the range
+         * @param last The last, non-inclusive element to consider in the range
+         */
+        void assign(iterator first, iterator last);
+
+        /**
          * Fill the vector with a value
          * @param n The new size for the vector
          * @param val Value to fill the vector with
@@ -95,19 +156,63 @@ class vector {
         void pop_back();
 
         /**
+         * Insert a single element in the vector
+         * @param position An iterator specifying the position at which to insert the element
+         * @param val The value of the element to insert
+         * @return An iterator that points to the first of the newly inserted elements
+         */
+        iterator insert(iterator position, const T& val);
+
+        /**
+         * Insert several elements in the vector
+         * @param position An iterator specifying the position at which to insert the elements
+         * @param n The number of elements to insert
+         * @param val The value of the element to insert
+         * @return An iterator that points to the first of the newly inserted elements
+         */
+        iterator insert(iterator position, size_t n, T& val);
+
+        /** Insert a range of elements from two iterators in the vector
+        * @param position An iterator specifying the position at which to insert the range of elements
+        * @param first An iterator representing the first element in the range of elements to insert
+        * @param last An iterator representing the last, non-inclusive element in the range of elements to insert
+        * @return An iterator that points to the first of the newly inserted elements
+        */
+        iterator insert(iterator position, iterator first, iterator last);
+
+        /**
+         * Erase an element from the vector
+         * @param position An iterator specifying the position at which to remove the element
+         * @return An iterator poiting to the new location of the element that followed the last element erased
+         */
+        iterator erase(iterator position);
+
+        /**
+         * Erase a range of elements from the vector
+         * @param first An iterator representing the first position of the range in the vector
+         * @param last An iterator representing the last, non-inclusive position of the range in the vector
+         * @return An iterator poiting to the new location of the element that followed the last element erased
+         */
+        iterator erase(iterator first, iterator last);
+
+        /**
          * Clear the vector. This frees the allocated memory
          */
         void clear();
 
     private:
-        T*      data_;      /**< The contiguous dynamic array */
-        size_t  length_;    /**< The length of the array */
-        size_t  capacity_;  /**< The capacity of the array */
+        T*          data_;      /**< The contiguous dynamic array */
+        size_t      length_;    /**< The length of the array */
+        size_t      capacity_;  /**< The capacity of the array */
+        iterator    begin_;     /**< Iterator representing the first element in the vector */
+        iterator    end_;       /**< Iterator representing the past-the-last element in the vector */
 };
 
 template <typename T>
 vector<T>::vector() : data_(nullptr), length_(0), capacity_(4) {
     data_ = (T*)malloc(sizeof(T) * capacity_);
+    begin_ = &data_[0];
+    end_ = &data_[length_];
 }
 
 template <typename T>
@@ -116,6 +221,23 @@ vector<T>::vector(size_t n, const T& val) : length_(n), capacity_(n * 2) {
     for (size_t i = 0; i < length_; i++) {
         data_[i] = val;
     }
+
+    begin_ = &data_[0];
+    end_ = &data_[length_];
+}
+
+template <typename T>
+vector<T>::vector(iterator first, iterator last) {
+    length_ = (last - first) / sizeof(T);
+    capacity_ = length_ * 2;
+    data_ = (T*)malloc(sizeof(T) * capacity_);
+
+    for (size_t i = 0; first != last; ++first, i++) {
+        data_[i] = *first;
+    }
+
+    begin_ = &data_[0];
+    end_ = &data_[length_];
 }
 
 template <typename T>
@@ -127,17 +249,22 @@ vector<T>::vector(const vector<T>& src) {
     for (size_t i = 0; i < length_; i++) {
         data_[i] = src.data_[i];
     }
+
+    begin_ = &data_[0];
+    end_ = &data_[length_];
 }
 
 template <typename T>
 vector<T>::~vector() {
     clear();
+    free(data_);
 }
 
 template <typename T>
 vector<T>& vector<T>::operator=(const vector& rhs) {
     if (this != &rhs) {
         clear();
+        free(data_);
 
         length_ = rhs.length_;
         capacity_ = rhs.capacity_;
@@ -146,9 +273,52 @@ vector<T>& vector<T>::operator=(const vector& rhs) {
         for (size_t i = 0; i < length_; i++) {
             data_[i] = rhs.data_[i];
         }
+
+        begin_ = &data_[0];
+        end_ = &data_[length_];
     }
 
     return *this;
+}
+
+template <typename T>
+typename vector<T>::iterator vector<T>::begin() {
+    return begin_;
+}
+
+template <typename T>
+typename const vector<T>::const_iterator vector<T>::begin() const {
+    return begin_;
+}
+
+template <typename T>
+typename vector<T>::iterator vector<T>::end() {
+    return end_;
+}
+
+template <typename T>
+typename const vector<T>::const_iterator vector<T>::end() const {
+    return end_;
+}
+
+template <typename T>
+T& vector<T>::front() {
+    return data_[0];
+}
+
+template <typename T>
+const T& vector<T>::front() const {
+    return data_[0];
+}
+
+template <typename T>
+T& vector<T>::back() {
+    return data_[length_ - 1];
+}
+
+template <typename T>
+const T& vector<T>::back() const {
+    return data_[length_ - 1];
 }
 
 template <typename T>
@@ -186,6 +356,8 @@ void vector<T>::resize(size_t n, T val) {
     }
 
     length_ = n;
+    begin_ = &data_[0];
+    end_ = &data_[length_];
 }
 
 template <typename T>
@@ -200,6 +372,9 @@ void vector<T>::reserve(size_t n) {
 
         free(data_);
         data_ = newData;
+
+        begin_ = &data_[0];
+        end_ = &data_[length_];
     }
 }
 
@@ -228,6 +403,21 @@ const T& vector<T>::at(size_t n) const {
 }
 
 template <typename T>
+void vector<T>::assign(iterator first, iterator last) {
+    clear();
+
+    length_ = (last - first) / sizeof(T);
+    reserve(length_ * 2);
+
+    for (size_t i = 0; first != last, ++first, i++) {
+        data_[i] = *first;
+    }
+
+    begin_ = &data_[0];
+    end_ = &data_[length_];
+}
+
+template <typename T>
 void vector<T>::assign(size_t n, const T& val) {
     clear();
     reserve(n * 2);
@@ -237,6 +427,7 @@ void vector<T>::assign(size_t n, const T& val) {
     }
 
     length_ = n;
+    end_ = &data_[length_];
 }
 
 template <typename T>
@@ -251,15 +442,165 @@ void vector<T>::push_back(const T& val) {
 
         free(data_);
         data_ = newData;
+        begin_ = &data_[0];
     }
 
     data_[length_++] = val;
+    end_ = &data_[length_];
 }
 
 template <typename T>
 void vector<T>::pop_back() {
     data_[length_-1].~T();
     length_ -= 1;
+    end_ = &data_[length_];
+}
+
+template <typename T>
+typename vector<T>::iterator vector<T>::insert(iterator position, const T& val) {
+    size_t pos = (position - begin_) / sizeof(T);
+
+    if (length_ + 1 > capacity_) {
+        capacity_ *= 2;
+        T* newData = (T*)malloc(capacity_ * sizeof(T));
+
+        for (size_t i = 0; i < length_; i++) {
+            newData[i] = data_[i];
+        }
+
+        free(data_);
+        data_ = newData;
+        
+        begin_ = &data_[0];
+    }
+
+    const T* nextVal = &val;
+    const T* curVal = nullptr;
+    for (size_t i = pos; i < length_; i++) {
+        curVal = &data_[i];
+        data_[i] = nextVal;
+        nextVal = curVal;
+    }
+
+    data_[length_] = nextVal;
+    length_ += 1;
+
+    end_ = &data_[length_];
+
+    return begin_ + pos;
+}
+
+template <typename T>
+typename vector<T>::iterator vector<T>::insert(iterator position, size_t n, T& val) {
+    size_t pos = (position - begin_) / sizeof(T);
+
+    if (length_ + n > capacity_) {
+        capacity_ += n;
+        T* newData = (T*)malloc(capacity_ * sizeof(T));
+
+        for (size_t i = 0; i < length_; i++) {
+            newData[i] = data_[i];
+        }
+
+        free(data_);
+        data_ = newData;
+        
+        begin_ = &data_[0];
+    }
+
+    T* rightData = (T*)malloc((length_ - pos) * sizeof(T));
+    for (size_t i = pos, idx = 0; i < length_; i++, idx++) {
+        rightData[idx] = data_[i];
+    }
+
+    for (size_t i = pos; i < (pos + n); i++) {
+        data_[i] = val;
+    }
+
+    for (size_t i = (pos + n), idx = 0; i < (pos + n + length_); i++, idx++) {
+        data_[i] = rightData[idx];
+    }
+
+    free(rightData);
+    length_ += n;
+
+    end_ = &data_[length_];
+
+    return begin_ + pos;
+}
+
+template <typename T>
+typename vector<T>::iterator vector<T>::insert(iterator position, iterator first, iterator last) {
+    size_t pos = (position - begin_) / sizeof(T);
+    size_t size = (last - first) / sizeof(T);
+
+    if (length_ + size > capacity_) {
+        capacity_ += size;
+        T* newData = (T*)malloc(capacity_ * sizeof(T));
+
+        for (size_t i = 0; i < length_; i++) {
+            newData[i] = data_[i];
+        }
+
+        free(data_);
+        data_ = newData;
+        
+        begin_ = &data_[0];
+    }
+
+    T* rightData = (T*)malloc((length_ - pos) * sizeof(T));
+    for (size_t i = pos, idx = 0; i < length_; i++, idx++) {
+        rightData[idx] = data_[i];
+    }
+
+    for (size_t i = pos; i < (pos + size); i++, ++first) {
+        data_[i] = *first;
+    }
+
+    for (size_t i = (pos + size), idx = 0; i < (pos + size + length_); i++, idx++) {
+        data_[i] = rightData[idx];
+    }
+
+    free(rightData);
+    length_ += size;
+
+    end_ = &data_[length_];
+
+    return begin_ + pos;
+}
+
+template <typename T>
+typename vector<T>::iterator vector<T>::erase(iterator position) {
+    size_t pos = (position - begin_) / sizeof(T);
+    data_[length_ - 1].~T();
+    length_ -= 1;
+
+    for (size_t i = pos; i < length_; i++) {
+        data_[i] = data_[i + 1];
+    }
+
+    end_ = &data_[length_];
+
+    return begin_ + pos;
+}
+
+template <typename T>
+typename vector<T>::iterator vector<T>::erase(iterator first, iterator last) {
+    size_t pos = (first - begin_) / sizeof(T);
+    size_t endPos = (last - begin_) / sizeof(T);
+
+    for (size_t i = pos; i < endPos; i++) {
+        data_[i].~T();
+    }
+    length_ -= (endPos - pos);
+
+    for (size_t i = 0; i < (endPos - pos); i++) {
+        data_[i + pos] = data_[i + endPos];
+    }
+
+    end_ = &data_[length_];
+
+    return begin_ + pos;
 }
 
 template <typename T>
@@ -267,11 +608,8 @@ void vector<T>::clear() {
     for (size_t i = 0; i < length_; i++) {
         data_[i].~T();
     }
-
-    free(data_);
-    data_ = nullptr;
+    end_ = begin_;
     length_ = 0;
-    capacity_ = 0;
 }
 
 }

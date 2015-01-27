@@ -1,3 +1,4 @@
+#define _CRTDBG_MAP_ALLOC
 #include <boost/test/unit_test.hpp>
 
 #include "sketch_vector.h"
