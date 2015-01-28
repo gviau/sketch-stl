@@ -16,8 +16,8 @@ class base_iterator {
 
         base_iterator& operator=(const base_iterator& rhs);
 
-        base_iterator& operator++() const;
-        base_iterator& operator++(int);
+        base_iterator& operator++();
+        base_iterator operator++(int) const;
 
         bool operator==(const base_iterator& rhs) const;
         bool operator!=(const base_iterator& rhs) const;
@@ -92,15 +92,15 @@ base_iterator<T>& base_iterator<T>::operator=(const base_iterator<T>& rhs) {
 }
 
 template <typename T>
-base_iterator<T>& base_iterator<T>::operator++() const {
-    base_iterator<T> copy(ptr_ + 1);
-    return copy;
+base_iterator<T>& base_iterator<T>::operator++() {
+    ptr_++;
+    return *this;
 }
 
 template <typename T>
-base_iterator<T>& base_iterator<T>::operator++(int) {
-    ++ptr_;
-    return *this;
+base_iterator<T> base_iterator<T>::operator++(int) const {
+    base_iterator<T> copy(ptr_ + 1);
+    return copy;
 }
 
 template <typename T>

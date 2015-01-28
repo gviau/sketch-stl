@@ -170,7 +170,7 @@ class vector {
          * @param val The value of the element to insert
          * @return An iterator that points to the first of the newly inserted elements
          */
-        iterator insert(iterator position, size_t n, T& val);
+        iterator insert(iterator position, size_t n, const T& val);
 
         /** Insert a range of elements from two iterators in the vector
         * @param position An iterator specifying the position at which to insert the range of elements
@@ -228,7 +228,7 @@ vector<T>::vector(size_t n, const T& val) : length_(n), capacity_(n * 2) {
 
 template <typename T>
 vector<T>::vector(iterator first, iterator last) {
-    length_ = (last - first) / sizeof(T);
+    length_ = ((size_t)&(*last) - (size_t)&(*first)) / sizeof(T);
     capacity_ = length_ * 2;
     data_ = (T*)malloc(sizeof(T) * capacity_);
 
@@ -406,10 +406,10 @@ template <typename T>
 void vector<T>::assign(iterator first, iterator last) {
     clear();
 
-    length_ = (last - first) / sizeof(T);
+    length_ = ((size_t)&(*last) - (size_t)&(*first)) / sizeof(T);
     reserve(length_ * 2);
 
-    for (size_t i = 0; first != last, ++first, i++) {
+    for (size_t i = 0; first != last; ++first, i++) {
         data_[i] = *first;
     }
 
@@ -458,7 +458,7 @@ void vector<T>::pop_back() {
 
 template <typename T>
 typename vector<T>::iterator vector<T>::insert(iterator position, const T& val) {
-    size_t pos = (position - begin_) / sizeof(T);
+    size_t pos = ((size_t)&(*position) - (size_t)&(*begin_)) / sizeof(T);
 
     if (length_ + 1 > capacity_) {
         capacity_ *= 2;
@@ -474,10 +474,10 @@ typename vector<T>::iterator vector<T>::insert(iterator position, const T& val) 
         begin_ = &data_[0];
     }
 
-    const T* nextVal = &val;
-    const T* curVal = nullptr;
+    T nextVal = val;
+    T curVal;
     for (size_t i = pos; i < length_; i++) {
-        curVal = &data_[i];
+        curVal = data_[i];
         data_[i] = nextVal;
         nextVal = curVal;
     }
@@ -491,8 +491,8 @@ typename vector<T>::iterator vector<T>::insert(iterator position, const T& val) 
 }
 
 template <typename T>
-typename vector<T>::iterator vector<T>::insert(iterator position, size_t n, T& val) {
-    size_t pos = (position - begin_) / sizeof(T);
+typename vector<T>::iterator vector<T>::insert(iterator position, size_t n, const T& val) {
+    size_t pos = ((size_t)&(*position) - (size_t)&(*begin_)) / sizeof(T);
 
     if (length_ + n > capacity_) {
         capacity_ += n;
@@ -517,7 +517,7 @@ typename vector<T>::iterator vector<T>::insert(iterator position, size_t n, T& v
         data_[i] = val;
     }
 
-    for (size_t i = (pos + n), idx = 0; i < (pos + n + length_); i++, idx++) {
+    for (size_t i = (pos + n), idx = 0; i < (n + length_); i++, idx++) {
         data_[i] = rightData[idx];
     }
 
@@ -531,8 +531,8 @@ typename vector<T>::iterator vector<T>::insert(iterator position, size_t n, T& v
 
 template <typename T>
 typename vector<T>::iterator vector<T>::insert(iterator position, iterator first, iterator last) {
-    size_t pos = (position - begin_) / sizeof(T);
-    size_t size = (last - first) / sizeof(T);
+    size_t pos = ((size_t)&(*position) - (size_t)&(*begin_)) / sizeof(T);
+    size_t size = ((size_t)&(*last) - (size_t)&(*first)) / sizeof(T);
 
     if (length_ + size > capacity_) {
         capacity_ += size;
@@ -557,7 +557,7 @@ typename vector<T>::iterator vector<T>::insert(iterator position, iterator first
         data_[i] = *first;
     }
 
-    for (size_t i = (pos + size), idx = 0; i < (pos + size + length_); i++, idx++) {
+    for (size_t i = (pos + size), idx = 0; i < (size + length_); i++, idx++) {
         data_[i] = rightData[idx];
     }
 
@@ -571,7 +571,7 @@ typename vector<T>::iterator vector<T>::insert(iterator position, iterator first
 
 template <typename T>
 typename vector<T>::iterator vector<T>::erase(iterator position) {
-    size_t pos = (position - begin_) / sizeof(T);
+    size_t pos = ((size_t)&(*position) - (size_t)&(*begin_)) / sizeof(T);
     data_[length_ - 1].~T();
     length_ -= 1;
 
@@ -586,16 +586,17 @@ typename vector<T>::iterator vector<T>::erase(iterator position) {
 
 template <typename T>
 typename vector<T>::iterator vector<T>::erase(iterator first, iterator last) {
-    size_t pos = (first - begin_) / sizeof(T);
-    size_t endPos = (last - begin_) / sizeof(T);
+    size_t pos = ((size_t)&(*first) - (size_t)&(*begin_)) / sizeof(T);
+    size_t endPos = ((size_t)&(*last) - (size_t)&(*begin_)) / sizeof(T);
 
     for (size_t i = pos; i < endPos; i++) {
         data_[i].~T();
     }
-    length_ -= (endPos - pos);
 
-    for (size_t i = 0; i < (endPos - pos); i++) {
-        data_[i + pos] = data_[i + endPos];
+    size_t diff = endPos - pos;
+    length_ -= diff;
+    for (size_t i = pos; i < length_; i++) {
+        data_[i] = data_[i + diff];
     }
 
     end_ = &data_[length_];
